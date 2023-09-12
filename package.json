@@ -55,6 +55,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.1.2",
     "@types/node": "^20.3.1",
     "csv": "^6.3.1",
     "csv-parse": "^5.4.0",
