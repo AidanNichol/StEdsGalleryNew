@@ -2,8 +2,8 @@ const Jimp = require("jimp");
 const jetpack = require("fs-jetpack");
 // Add a picture to an album
 async function add_picture(log, temp, filename, directory) {
-  let galleryDir = `${process.env.GALLERY_DATA}/${directory}`;
-  let baseImage = `${galleryDir}/${filename}`;
+  const galleryDir = `${process.env.GALLERY_DATA}/${directory}`;
+  const baseImage = `${galleryDir}/${filename}`;
   jetpack.dir(`gallery/${directory}`);
   if (jetpack.exists(temp) !== "file") log("ugh!", temp, jetpack.exists(temp));
   log({ galleryDir, baseImage, temp });
@@ -13,7 +13,7 @@ async function add_picture(log, temp, filename, directory) {
 
     let { width, height } = image.bitmap;
     if (jetpack.exists(baseImage) !== "file") {
-      let ratio = Math.min(1280 / width, 1280 / height);
+      const ratio = Math.min(1280 / width, 1280 / height);
 
       // resize picture if it's bigger than the max width or height for uploaded pictures
       if (ratio < 1) {
@@ -26,16 +26,16 @@ async function add_picture(log, temp, filename, directory) {
       log("newSize", { width, height, ratio });
     }
     log(`created ${baseImage}`);
-    let srcset = ``;
+    let srcset = "";
 
-    let [, file, ext] = filename.toLowerCase().match(/^(.+)\.(.*?)$/);
+    const [, file, ext] = filename.toLowerCase().match(/^(.+)\.(.*?)$/);
 
     for (const sz of [70, 350, 800]) {
       //   [800, 350, 70].forEach(async (sz) => {
       if (width < sz * 1.2) continue;
       // console.log("ext", image.getExtension());
-      let picName = `${file}~${sz}.${ext}`;
-      let newF = `${galleryDir}/${picName}`;
+      const picName = `${file}~${sz}.${ext}`;
+      const newF = `${galleryDir}/${picName}`;
       if (jetpack.exists(newF) !== "file") {
         await image
           .clone()
