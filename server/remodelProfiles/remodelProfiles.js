@@ -14,7 +14,7 @@ async function remodelProfiles(walkNo, routes) {
     let maxDist = 0;
     let maxElev = 0;
     let minElev = 99999;
-    let trace = [];
+    const trace = [];
     // await jetpack.write("profileData.json", JSON.stringify(routes));
     const libdir = `${walkdata}/${walkNo.substr(0, 4)}/${walkNo}`;
     for (const route of routes) {
@@ -23,7 +23,7 @@ async function remodelProfiles(walkNo, routes) {
       maxDist = Math.max(maxDist, route.dist);
       maxElev = Math.max(route.maxElev, maxElev);
       minElev = Math.min(route.minElev, minElev);
-      let elev = route.maxElev - route.minElev;
+      const elev = route.maxElev - route.minElev;
       // if ($elev > maxElev) {
       //     maxElev = $elev;
       // }
@@ -35,8 +35,8 @@ async function remodelProfiles(walkNo, routes) {
     // let pxPerFt = 200 / (maxElev - minElev);
     // let pxPerMile = 1000 / maxDist;
     // let pxPerFt = Math.min(0.05, 200 / (maxElev - minElev));
-    let pxPerFt = 12 / 100;
-    let pxPerMile = Math.min(45, 720 / (maxDist / 1000));
+    const pxPerFt = 12 / 100;
+    const pxPerMile = Math.min(45, 720 / (maxDist / 1000));
     //$pxPerFt = 0.30;
     //$pxPerMile = 45;
     trace.push(
@@ -44,24 +44,24 @@ async function remodelProfiles(walkNo, routes) {
     );
     //$walkdate="2009-10-17";
     for (const route of routes) {
-      let no = route.no;
-      //   let fil3P = `${libdir}/profile-${walkNo}-walk-${no}`;
-      let fil = `${libdir}/profile-${walkNo}-walk-${no}.bmp`;
-      let img = await Jimp.read(fil);
+      const no = route.no;
+      //   const fil3P = `${libdir}/profile-${walkNo}-walk-${no}`;
+      const fil = `${libdir}/profile-${walkNo}-walk-${no}.bmp`;
+      const img = await Jimp.read(fil);
 
-      let fil2 = `${libdir}/profile-${walkNo}-walk-${no}.jpg`;
+      const fil2 = `${libdir}/profile-${walkNo}-walk-${no}.jpg`;
       await cleanupImage(img);
       //   await img.writeAsync("./testimg2.png");
       route.minElev = rebaseProfile(img, route.minElev, route.maxElev);
       // calculate the scale and resize the profile
-      let elev = route.maxElev - route.minElev;
+      const elev = route.maxElev - route.minElev;
       trace.push(`${no}: ${elev} ${route.maxElev} ${route.minElev}`);
-      let pxHt = Math.round(elev * pxPerFt);
-      let pxWd = Math.round(route.dist * pxPerMile);
+      const pxHt = Math.round(elev * pxPerFt);
+      const pxWd = Math.round(route.dist * pxPerMile);
       await img.resize(pxWd, pxHt);
       //   await img.writeAsync("./testimg3.png");
-      let pad = { t: 8, b: 20, l: 45, r: 14 };
-      let img2 = await new Jimp(
+      const pad = { t: 8, b: 20, l: 45, r: 14 };
+      const img2 = await new Jimp(
         pxWd + pad.l + pad.r,
         pxHt + pad.t + pad.b,
         0xffffffff

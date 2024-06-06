@@ -1,21 +1,16 @@
-const _ = require("lodash");
-const jetpack = require("fs-jetpack");
 const Jimp = require("jimp");
-const { profile } = require("console");
-const walkdata = "/Users/aidan/Websites/htdocsC/walkdata";
 
-async function cleanupImage(img) {
-  let white = 0xffffffff;
-  let black = 0x000000ff;
-  let blue = 0x0000ffff;
-  let green = 0xbdffb8ff;
-  let grey = 0x808080ff;
-  const showColor = (x, y) => Jimp.intToRGBA(img.getPixelColor(x, y));
+async function cleanupImage(imgOrig) {
+  const white = 0xffffffff;
+  const black = 0x000000ff;
+  const blue = 0x0000ffff;
+  const green = 0xbdffb8ff;
+  const grey = 0x808080ff;
 
   // crop the existing white space borders and labling
   let wd = img.bitmap.width - 1 - 61;
   let ht = img.bitmap.height - 29 - 8;
-  img = await img.crop(61, 8, wd, ht);
+  const img = await imgOrig.crop(61, 8, wd, ht);
 
   wd = img.bitmap.width;
   ht = img.bitmap.height;
@@ -35,7 +30,7 @@ async function cleanupImage(img) {
   });
   // remove the blue lines at waypoints
   await img.scan(0, 0, wd, ht, function (x, y, idx) {
-    let clr2 = img.getPixelColor(x, y);
+    const clr2 = img.getPixelColor(x, y);
     if (img.getPixelColor(x, y) === blue) img.setPixelColor(green, x, y);
   });
 

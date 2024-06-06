@@ -1,7 +1,7 @@
 function rebaseProfile(img, minElev, maxElev) {
-  let wd = img.bitmap.width;
-  let ht = img.bitmap.height;
-  let black = 0x000000ff;
+  const wd = img.bitmap.width;
+  const ht = img.bitmap.height;
+  const black = 0x000000ff;
 
   for (let y = ht - 2; y > 1; --y) {
     for (let x = 1; x < wd - 2; ++x) {
