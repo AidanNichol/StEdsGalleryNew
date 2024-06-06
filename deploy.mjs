@@ -35,12 +35,12 @@ async function example() {
       if (data.type === "dir") await uploadNewer(data);
       else {
         if (isNewer(data)) {
-          const file = jetpack.path(`server`, data.relativePath);
+          const file = jetpack.path("server", data.relativePath);
           console.log(`     upload: ${file}
 					         to: ${data.relativePath}`);
           await client.uploadFrom(file, data.relativePath);
           if (data.relativePath === "./upload.php") {
-            console.log(`     copyto: /home/ajnichol/public_html/upload.php`);
+            console.log("     copyto: /home/ajnichol/public_html/upload.php");
           }
         }
       }
@@ -72,7 +72,7 @@ async function example() {
     // await client.uploadFrom(".env", ".env");
     const pckg = jetpack.read("package.json", "json");
 
-    // rome-ignore lint/performance/noDelete: <explanation>
+    // biome-ignore lint/performance/noDelete: <explanation>
     delete pckg.devDependencies;
     pckg.volta = undefined;
     jetpack.write("temp.json", pckg);

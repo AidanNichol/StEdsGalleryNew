@@ -38,8 +38,8 @@ const auth_default = {
 exports.isOkForRole = function isOkForRole(request, role, alwaysReturn) {
   // return true;
   // if (getenv.bool("DEVELOPMENT")) return true;
-  const authToken=request.headers["auth-token"]??request.body.authToken;
-  const authSeq=request.headers.authseq??request.body.authseq;
+  const authToken = request.headers["auth-token"] ?? request.body?.authToken;
+  const authSeq = request.headers.authseq ?? request.body?.authseq;
   const { roles = [], authseq } = current.get(authToken);
   const authSeqMatch = authSeq === authseq;
   const hasRole = roles.includes(role) || roles.includes("admin");
@@ -152,10 +152,17 @@ exports.authRoutes = async function authRoutes(fastify, options) {
         roles: "tester,uploader,admin",
       },
       {
-        memid: "M825",
-        name: "Peter Reed",
-        mobile: "07761064556",
-        email: "pr2@blueyonder.co.uk",
+        memid: "M1092",
+        name: "Helen Kay",
+        mobile: "07834754499",
+        email: "helenmkay@blueyonder.co.uk",
+        roles: "committee,tester,uploader,admin",
+      },
+      {
+        memid: "M1092",
+        name: "Helen Kay",
+        mobile: "07834754499",
+        email: "drhelenmkay@googlemail.com",
         roles: "committee,tester,uploader,admin",
       },
     ];

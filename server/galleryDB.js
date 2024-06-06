@@ -5,7 +5,8 @@ const getenv = require("getenv");
 // const { logKeys } = require('../util/logObj');
 // const { logTrace } = require('../util/logTrace');
 
-let sequelize = new Sequelize({
+component.set(params);
+sequelize = new Sequelize({
   dialect: "mysql",
   dialectOptions: {
     host: "localhost",

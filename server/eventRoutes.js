@@ -22,7 +22,7 @@ async function eventRoutes(fastify, options) {
     const [results, metadata] = await db.sequelize.query(
       "SELECT name FROM sqlite_master WHERE type ='table' AND name NOT LIKE 'sqlite_%';"
     );
-    fastify.log.warn("tables: " + JSON.stringify(results));
+    fastify.log.warn(`tables: ${JSON.stringify(results)}`);
     console.log("getPictures ", results, metadata);
 
     return results;
@@ -47,7 +47,7 @@ async function eventRoutes(fastify, options) {
       const id = req.params.id;
       const { unsaved, dirty, ...data } = await req.body;
 
-      let evnt = await db.event.findOne({
+      const evnt = await db.event.findOne({
         where: { id: id },
       });
       if (!evnt) {

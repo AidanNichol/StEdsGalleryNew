@@ -20,6 +20,7 @@ const { cpgRoutes } = require("./cpgRoutes.js");
 const { authRoutes } = require("./authRoutes.js");
 const { walkRoutes } = require("./walkRoutes.js");
 const { eventRoutes } = require("./eventRoutes.js");
+const { webCollectRoutes } = require("./webCollectRoutes.js");
 const galleryDataPath = process.env.GALLERY_DATA;
 console.log("galleryData", galleryDataPath);
 // const fs = require("fs");
@@ -30,39 +31,33 @@ console.log("downloadsdata", downloadsDataPath);
 const sitePrefix = getenv("SITE_PREFIX", "apiServer/");
 console.log("sitePrefix", sitePrefix);
 console.log("cwd", jetpack.cwd());
+
 let server;
-const serverFactory = (handler) => {
+let port;
+
+const serverFactory = (handler, opts) => {
   server = http.createServer((req, res) => {
     handler(req, res);
   });
+
   return server;
 };
 
-// const https = getenv.bool("DEVELOPMENT")
-//   ? {
-//       https: {
-//         key: read("./server.key"),
-//         cert: read("./server.crt"),
-//       },
-//     }
-//   : {};
-jetpack.dir("../logs");
-const fastify = fastifyPkg({
+const fastify = require("fastify")({
   serverFactory,
-  bodyLimit: 10048576,
-  ignoreTrailingSlash: true,
   logger: {
     level: "info",
-    file: "../logs/stEdsGallery.log", // will use pino.destination()
+    file: "./logs/empty.log", // will use pino.destination()
     timestamp: stdTimeFunctions.isoTime,
   },
 });
-// fastify.addHook('onRequest', (request, reply, done) => {
-//   let msg=`method: ${request.method}, url: ${request.url}`;
-// 	console.log(msg);
-// 	fastify.log.info(msg)
-//   done()
-// })
+fastify.get(`/${sitePrefix}`, async () => {
+  return {
+    hello: "world",
+    version: process.versions.node,
+    when: new Date(),
+  };
+});
 fastify.register(fastifyCookie, {
   secret: getenv("COOKIE_SECRET"), // for cookies signature
   parseOptions: {}, // options for parsing cookies
@@ -70,7 +65,7 @@ fastify.register(fastifyCookie, {
 fastify.register(multipart, { attachFieldsToBody: true });
 fastify.register(fastifyCors, {
   credentials: true,
-  origin: [/localhost/, /stedwardsfellwalkers\.co\.uk$/, /.*/],
+  origin: [/localhost/, /stedwardsfellwalkers\.co\.uk$/],
 });
 
 fastify.log.info(`server: ${sitePrefix} version: ${version}`);
@@ -111,6 +106,7 @@ fastify.get(`/${sitePrefix}`, async () => {
 fastify.register(walkRoutes, { prefix: `${sitePrefix}walks` });
 fastify.register(cpgRoutes, { prefix: `${sitePrefix}cpg` });
 fastify.register(eventRoutes, { prefix: `${sitePrefix}events` });
+fastify.register(webCollectRoutes, { prefix: `${sitePrefix}webcollect` });
 fastify.register(authRoutes, { prefix: `${sitePrefix}auth` });
 
 // Run the server!
@@ -129,6 +125,9 @@ const runit = async () => {
 const node_env = getenv("NODE_ENV", "developement");
 console.error("node_env", node_env, version);
 console.warn("node_warn", new Date(), node_env, node_env, version);
+// fastify.get('/apiServer/', (req, reply) => {
+//   reply.send({ hello: 'world' , version: 3})
+// })
 fastify.ready(() => {
   if (node_env === "production") server.listen();
   else server.listen({ port: 5555 });

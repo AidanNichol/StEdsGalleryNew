@@ -20,12 +20,11 @@ const isDev = (dev = true) => dev;
 const galleryDataPath = process.env.GALLERY_DATA;
 
 async function cpgRoutes(fastify, options) {
-  const logMe = function () {
+  const logMe = function (...args) {
     let result = ""; // initialize list
     // iterate through arguments
-    console.warn("logme", ...arguments);
-    for (let i = 0; i < arguments.length; i++) {
-      let a = arguments[i];
+
+    for (const a of args) {
       result += `${typeof a === "object" ? JSON.stringify(a) : String(a)} `;
     }
     fastify.log.info(result);
@@ -312,10 +311,10 @@ async function cpgRoutes(fastify, options) {
       });
       logMe({ pid, filename });
       logMe(filename.match(/^(.+)\.(.*?)$/));
-      let [, file, ext] = filename.match(/^(.+)\.(.*?)$/);
-      let newF = `pic${pid}.${ext}`;
+      const [, file, ext] = filename.match(/^(.+)\.(.*?)$/);
+      const newF = `pic${pid}.${ext}`;
       logMe(pid, tempFile, newF, directory);
-      let { srcset, width, height } = await add_picture(
+      const { srcset, width, height } = await add_picture(
         logMe,
         tempFile,
         newF,

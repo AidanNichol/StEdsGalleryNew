@@ -47,6 +47,7 @@
     "log-update": "^5.0.1",
     "mailgun.js": "^9.1.1",
     "mysql2": "^3.4.0",
+    "node-fetch": "2",
     "ospoint": "^0.2.1",
     "pino": "^8.14.1",
     "prettier": "^2.8.8",
@@ -57,12 +58,12 @@
   "devDependencies": {
     "@biomejs/biome": "1.1.2",
     "@types/node": "^20.3.1",
+    "cloudinary": "^1.40.0",
     "csv": "^6.3.1",
     "csv-parse": "^5.4.0",
     "eslint": "^8.43.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "node-fetch": "^3.3.1",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.3"
