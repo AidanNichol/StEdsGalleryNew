@@ -42,7 +42,7 @@ const serverFactory = (handler, opts) => {
 
   return server;
 };
-
+jetpack.dir("./logs", { mode: "777" });
 const fastify = require("fastify")({
   serverFactory,
   logger: {
@@ -58,11 +58,14 @@ fastify.get(`/${sitePrefix}`, async () => {
     when: new Date(),
   };
 });
-fastify.register(fastifyCookie, {
-  secret: getenv("COOKIE_SECRET"), // for cookies signature
-  parseOptions: {}, // options for parsing cookies
+// fastify.register(fastifyCookie, {
+//   secret: getenv("COOKIE_SECRET"), // for cookies signature
+//   parseOptions: {}, // options for parsing cookies
+// });
+fastify.register(multipart, {
+  attachFieldsToBody: true,
+  limits: { fileSize: 5000000 },
 });
-fastify.register(multipart, { attachFieldsToBody: true });
 fastify.register(fastifyCors, {
   credentials: true,
   origin: [/localhost/, /stedwardsfellwalkers\.co\.uk$/],
@@ -96,13 +99,13 @@ console.log(`static ${`/${sitePrefix}downloads`} ==> ${downloadsDataPath}`);
 //   credentials: true,
 //   origin: [/localhost/, /stedwardsfellwalkers\.co\.uk$/],
 // });
-fastify.get(`/${sitePrefix}`, async () => {
-  return {
-    hello: "world",
-    version: process.versions.node,
-    server: fastify.server.address(),
-  };
-});
+// fastify.get(`/${sitePrefix}`, async () => {
+//   return {
+//     hello: "world",
+//     version: process.versions.node,
+//     server: fastify.server.address(),
+//   };
+// });
 fastify.register(walkRoutes, { prefix: `${sitePrefix}walks` });
 fastify.register(cpgRoutes, { prefix: `${sitePrefix}cpg` });
 fastify.register(eventRoutes, { prefix: `${sitePrefix}events` });

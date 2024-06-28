@@ -40,18 +40,20 @@ exports.isOkForRole = function isOkForRole(request, role, alwaysReturn) {
   // if (getenv.bool("DEVELOPMENT")) return true;
   const authToken = request.headers["auth-token"] ?? request.body?.authToken;
   const authSeq = request.headers.authseq ?? request.body?.authseq;
-  const { roles = [], authseq } = current.get(authToken);
+  console.log("isOkForRole", authToken, authSeq);
+  const { roles = [], authseq } = current.get(authToken) ?? {};
   const authSeqMatch = authSeq === authseq;
   const hasRole = roles.includes(role) || roles.includes("admin");
   const OK = authSeqMatch && hasRole;
   console.log(request.headers.authseq, authseq, roles, OK);
   console.log(current);
-  if (!OK && !alwaysReturn)
-    throw Error(
-      `not authorized for role: ${role}. ${
-        authSeqMatch ? "" : "bad authSeq. "
-      }${hasRole ? "" : `doesn't have that role`}`
-    );
+  if (!OK && !alwaysReturn) {
+    const txt = `not authorized for role: ${role}. ${
+      authSeqMatch ? "" : "bad authSeq. "
+    }${hasRole ? "" : `doesn't have that role`}`;
+    console.warn("isOkForRole error", txt);
+    throw Error(txt);
+  }
   return OK;
 };
 
@@ -85,9 +87,9 @@ exports.authRoutes = async function authRoutes(fastify, options) {
     } = request.headers;
     if (memid === "undefined") {
       const fpData = current.get(fingerprint);
-      memid = (fpData || {}).memid;
+      memid = fpData?.memid;
     }
-    let filename = path(`data/user-${memid}.json`);
+    const filename = path(`data/user-${memid}.json`);
     let auth = read(filename, "json") || auth_default;
     if (auth.fingerprint !== fingerprint) auth = auth_default;
 
@@ -117,7 +119,7 @@ exports.authRoutes = async function authRoutes(fastify, options) {
     if (auth.state === 2) {
       authseq = authseq || uuidv4();
       auth.authseq = authseq;
-      delete auth.error;
+      auth.error = undefined;
       current.set(fingerprint, auth);
       console.log("setting authSeq", authseq);
     }
@@ -129,7 +131,7 @@ exports.authRoutes = async function authRoutes(fastify, options) {
       filename && remove(filename);
       current.has(fingerprint) && current.delete(fingerprint);
     }
-    const resp = { ...ret, authseq, roles };
+    const resp = { ...ret, memid, authseq, roles };
     console.log("process response", resp);
     response.send(resp);
   }
@@ -188,14 +190,13 @@ exports.authRoutes = async function authRoutes(fastify, options) {
       const member = findMember(field, ids);
 
       if (member === false) {
-        auth.error =
-          "No member with a " +
-          (isEmail ? "email address" : "mobile phone number") +
-          ` of ${identifier} was found.`;
+        auth.error = `No member with a ${
+          isEmail ? "email address" : "mobile phone number"
+        } of ${identifier} was found.`;
       } else {
         identifier = ids[0];
-        let via = isEmail ? "email" : "text";
-        let verificationSeq = Math.floor(
+        const via = isEmail ? "email" : "text";
+        const verificationSeq = Math.floor(
           Math.random() * (999999 - 100000) + 100000
         ).toString();
         auth = {
@@ -218,7 +219,7 @@ exports.authRoutes = async function authRoutes(fastify, options) {
   fastify.get("/checkVerfication/:verification", async (request, response) => {
     const { verification } = request.params;
     const auth = getAuthFromFile(request);
-    let authseq = "";
+    const authseq = "";
     auth.error = null;
 
     if (auth.state !== 1) {
@@ -235,12 +236,12 @@ exports.authRoutes = async function authRoutes(fastify, options) {
     processResponse(request, response, auth);
   });
 };
-function expandMobile(id) {
-  id = id.replace(/ /g, "");
+function expandMobile(idRaw) {
+  let id = idRaw.replace(/ /g, "");
   if (id[0] === "0") id = id.substr(1);
   if (id.substr(0, 3) === "+44") id = id.substr(3);
   if (id.substr(0, 2) === "44") id = id.substr(2);
-  return ["+44" + id, "44" + id, "0" + id];
+  return [`+44${id}`, `44${id}`, `0${id}`];
 }
 async function sendEmail(device) {
   const to = `${device.name} <${device.identifier}>`;
@@ -258,8 +259,11 @@ async function sendEmail(device) {
   }
 }
 async function sendText(device) {
-  console.log("sendtext", device);
-  var c = new TMClient(getenv("TEXTMAGIC_NAME"), getenv("TEXTMAGIC_PASSWORD"));
+  console.log("sendText", device);
+  const c = new TMClient(
+    getenv("TEXTMAGIC_NAME"),
+    getenv("TEXTMAGIC_PASSWORD")
+  );
   const text = `Your Verification code for authenticated access to St. Edwards Fellwalkers is ${device.verificationSeq}`;
   c.Messages.send({ text, phones: device.identifier }, function (err, res) {
     console.log("Messages.send()", err, res);

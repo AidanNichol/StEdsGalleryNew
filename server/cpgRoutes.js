@@ -160,7 +160,9 @@ async function cpgRoutes(fastify, options) {
   });
 
   fastify.get("/renameAlbum", async (req) => {
-    const { aid, title } = await req.query;
+    let { aid, title } = await req.query;
+    aid = parseInt(aid);
+
     logMe({ aid, title });
     const count = await db.album.update({ title }, { where: { aid } });
     return { count };
@@ -168,7 +170,9 @@ async function cpgRoutes(fastify, options) {
   fastify.get("/hideAlbum", async (req) => {
     const body = await req.query;
 
-    const { aid, hidden } = body;
+    let { aid, hidden } = body;
+    aid = parseInt(aid);
+
     logMe("Hidding", aid, hidden);
     const count = await db.album.update({ hidden }, { where: { aid } });
     return { count };
@@ -176,51 +180,67 @@ async function cpgRoutes(fastify, options) {
 
   fastify.get("/changePhotographer", async (req, reply) => {
     const body = await req.query;
-    const { ids, photographer } = body;
+    let { ids, photographer } = body;
     if (!ids || !photographer) {
       reply
         .code(208)
         .send({ count: -1, msg: "no ids or photographer specified" });
       return;
     }
+    ids = ids.split(",");
     const count = await db.picture.update(
       { photographer },
-      { where: { pid: ids } }
+      { where: { pid: { [Op.in]: ids } } }
     );
+    // for (const id of ids) {
+    //   count += await db.picture.update(
+    //     { photographer },
+    //     { where: { pid: id } }
+    //   );
+    // }
     return { count };
   });
   fastify.get("/changePhotographer2", async (req, reply) => {
-    const { ids, photographer } = (await req.query) ?? {};
+    let { ids, photographer } = (await req.query) ?? {};
     if (!ids || !photographer) {
       reply
         .code(208)
         .send({ count: -1, msg: "no ids or photographer specified" });
       return;
     }
+    ids = ids.split(",");
+
     const count = await db.picture.update(
       { photographer },
-      { where: { pid: ids } }
+      { where: { pid: { [Op.in]: ids } } }
     );
     return { count };
   });
   fastify.get("/changeCaption", async (req) => {
     const body = await req.query;
-    const { ids, caption } = body;
-    const count = await db.picture.update({ caption }, { where: { pid: ids } });
+    let { ids, caption } = body;
+    ids = split(",");
+    const count = await db.picture.update(
+      { caption },
+      { where: { pid: { [Op.in]: ids } } }
+    );
     return { count };
   });
   fastify.get("/changeHidden", async (req) => {
     const body = await req.query;
-    const { ids, hidden } = body;
+    let { ids, hidden } = body;
+    ids = ids.split(",");
     const count = await db.picture.update(
       { hidden: hidden ? 1 : 0 },
-      { where: { pid: ids } }
+      { where: { pid: { [Op.in]: ids } } }
     );
     return { count };
   });
   fastify.get("/deleteAlbum", async (req) => {
     const body = await req.query;
-    const { aid } = body;
+    let { aid } = body;
+    aid = parseInt(aid);
+
     const album = await db.album.findByPk(aid);
 
     const folder = `${galleryDataPath}/${album.directory}`;
@@ -236,18 +256,24 @@ async function cpgRoutes(fastify, options) {
   });
   fastify.get("/deletePictures", async (req) => {
     const body = await req.query;
-    const { ids, aid } = body;
+    let { ids, aid } = body;
+    ids = ids.split(",");
+    aid = parseInt(aid);
     const album = await db.album.findByPk(aid);
 
     const folder = `${galleryDataPath}/${album.directory}`;
     const pics = jetpack.cwd(folder); // new jetpack context
-    const pictures = await db.picture.findAll({ where: { pid: ids } });
+    const pictures = await db.picture.findAll({
+      where: { pid: { [Op.in]: ids } },
+    });
     const filter = pictures.map((p) => p.filename.replace(".", "*."));
     logMe(folder, { filter });
     const files = pics.find(".", { matching: filter });
     logMe({ files });
     files.forEach(pics.remove);
-    const count = await db.picture.destroy({ where: { pid: ids } });
+    const count = await db.picture.destroy({
+      where: { pid: { [Op.in]: ids } },
+    });
     return { count };
   });
   fastify.get("/processUpload", async (req, reply) => {
@@ -259,24 +285,46 @@ async function cpgRoutes(fastify, options) {
       tempFile,
     });
     if (!isOkForRole(req, "uploader")) {
+      console.warn("not authorized for uploading");
       throw Error("not authorized for uploading");
     }
     return processUpload(filename, albumTitle, photographer, tempFile);
   });
   fastify.post("/processUpload", async (req, reply) => {
-    logMe("processUpload", req.headers);
-    const body = await req.body;
-    const { filename, albumTitle, photographer, tempFile } = body;
+    // logMe("processUpload", req.headers);
+    const authToken = await req.headers["auth-token"];
+    const authseq = await req.headers.authseq;
+    const memId = await req.headers["member-id"];
+    console.log("processUpload auth", { authToken, authseq, memId });
+    // for (const [key, value] of Object.entries(req.headers)) {
+    //   console.log("processUpload header", key, value);
+    // }
+    const files = await req.saveRequestFiles();
+    const results = [];
+    const file = files[0];
+    // for (const file of files) {
+    const { filename, fields, filepath } = file;
+    const albumTitle = fields.albumTitle.value;
+    const photographer = fields.photographer?.value;
     console.warn("from body", new Date(), {
       filename,
       albumTitle,
       photographer,
-      tempFile,
+      filepath,
     });
     if (!isOkForRole(req, "uploader")) {
+      console.warn("not authorized for uploading");
       throw Error("not authorized for uploading");
     }
-    return processUpload(filename, albumTitle, photographer, tempFile);
+    const result = await processUpload(
+      filename,
+      albumTitle,
+      photographer,
+      filepath
+    );
+    // results.push(result);
+    // }
+    return result;
   });
 
   async function processUpload(filename, albumTitle, photographer, tempFile) {
